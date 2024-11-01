@@ -1,0 +1,23 @@
+{
+  "name": "neutron-bulk-sender",
+  "version": "1.0.0",
+  "description": "Bulk USDC sender for Neutron chain refunds",
+  "main": "neutron-bulk-send.js",
+  "scripts": {
+    "start": "node neutron-bulk-send.js"
+  },
+  "dependencies": {
+    "@cosmjs/proto-signing": "^0.32.4",
+    "@cosmjs/stargate": "^0.32.4",
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
