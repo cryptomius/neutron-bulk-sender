@@ -332,17 +332,46 @@ function validateCsvFile(filepath) {
         throw new Error(`File not found: ${filepath}`);
     }
     
-    const content = fs.readFileSync(filepath, 'utf-8');
+    let content = fs.readFileSync(filepath, 'utf-8');
     if (!content.trim()) {
-        throw new Error('CSV file is empty');
+        // If file is empty, create it with headers
+        const requiredColumns = ['address', 'amount', 'SUCCESS', 'TX_HASH'];
+        content = requiredColumns.join(',') + '\n';
+        fs.writeFileSync(filepath, content, 'utf-8');
+        return;
     }
     
-    const firstLine = content.split('\n')[0].toLowerCase();
-    const requiredColumns = ['address', 'amount', 'success', 'tx_hash'];
+    // Split content into lines, preserving only actual line breaks
+    let lines = content.trim().split('\n').map(line => line.trim()).filter(line => line);
+    let headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+    const requiredColumns = ['address', 'amount', 'SUCCESS', 'TX_HASH'];
+    let headersChanged = false;
+    
+    // Add any missing required columns
     for (const column of requiredColumns) {
-        if (!firstLine.includes(column)) {
-            throw new Error(`Required column '${column}' not found in CSV`);
+        if (!headers.includes(column.toLowerCase())) {
+            headers.push(column);  // Add the column in its original case
+            headersChanged = true;
+            console.log(`Added missing column: ${column}`);
         }
+    }
+    
+    // If we added any columns, update the CSV file
+    if (headersChanged) {
+        // Update the header line
+        let updatedLines = [headers.join(',')];
+        
+        // Add empty values for new columns to existing rows
+        for (let i = 1; i < lines.length; i++) {
+            const currentCols = lines[i].split(',').map(col => col.trim());
+            while (currentCols.length < headers.length) {
+                currentCols.push('');  // Add empty values for new columns
+            }
+            updatedLines.push(currentCols.join(','));
+        }
+        
+        // Write the updated content back to the file with proper line endings
+        fs.writeFileSync(filepath, updatedLines.join('\n') + '\n', 'utf-8');
     }
 }
 
@@ -470,9 +499,10 @@ async function main() {
         console.log(`Total sent: ${formatUSDC(BigInt(initialBalance) - BigInt(finalBalance))} USDC`);
         
         // Write detailed results to file
-        writeResults(batches);
+        // writeResults(batches);
 
         // Update stats object
+        /*
         const stats = {
             successCount,
             failureCount,
@@ -482,6 +512,7 @@ async function main() {
             duration: Date.now() - startTime
         };
         writeSummary(stats);
+        */
 
     } catch (error) {
         console.error('Fatal error:', error);
